@@ -43,9 +43,10 @@ Shortcuts follow key positions, so they work the same on any keyboard layout or 
 
 | Key                      | Does                                                |
 | ------------------------ | --------------------------------------------------- |
-| <kbd>return</kbd>        | Send, or stop a reply that is streaming             |
-| <kbd>⌘</kbd><kbd>V</kbd> | Attach an image, PDF or text file                   |
-| <kbd>delete</kbd>        | In an empty message box, remove the last attachment |
+| <kbd>return</kbd>                     | Send, stop a reply, or open Google AI Mode in Arc when that page is showing and the box is empty |
+| <kbd>⌘</kbd><kbd>return</kbd>         | Open the search in Arc, when Google Gemini (Browser) is the model                                 |
+| <kbd>⌘</kbd><kbd>V</kbd>              | Attach an image, PDF or text file                                                                 |
+| <kbd>delete</kbd>                     | In an empty message box, remove the last attachment                                               |
 
 ## Chat History
 

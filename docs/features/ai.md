@@ -37,11 +37,12 @@ depends on neither, and Quick Actions carries its own route rather than borrowin
   `::1`, where a key is optional, and any other scheme is rejected outright — a loopback host does
   not excuse `ftp://`. `AIEndpointPolicy` is the one place that decides this.
 - **The chat model is the routing decision.** It names the on-device model, a model exposed by the
-  installed Codex, Claude or OpenCode command, or one saved API connection and model. Installed
-  routes also carry their reasoning effort when the selected model supports one. A removed route
+  installed Codex, Claude or OpenCode command, one saved API connection and model, or Google Gemini
+  (Browser), which loads Google AI Mode in the palette instead of streaming. Installed routes also
+  carry their reasoning effort when the selected model supports one. A removed route
   falls forward to the on-device model when this Mac
   has one, then to another usable API model, then to no selection. Discovering an installed command
-  never silently selects a networked model.
+  never silently selects a networked model. `.geminiBrowser` is never a Quick Actions route.
 - **The on-device route is configured by having a Mac.** `.appleIntelligence` takes no key, opens no
   socket and names no endpoint, so the Keychain, HTTPS and ephemeral-session rules below have nothing
   to bind to — the Settings pane must never grow a credential field for it. It is text-only and
@@ -126,8 +127,11 @@ depends on neither, and Quick Actions carries its own route rather than borrowin
 
 ## Connections and routing
 
-`AIModelSelection` has five cases: `.appleIntelligence`, `.codex`, `.claude`, `.openCode` and `.api`.
-The first needs no connection at all. The next three name a model from an installed command and carry
+`AIModelSelection` has six cases: `.appleIntelligence`, `.geminiBrowser`, `.codex`, `.claude`,
+`.openCode` and `.api`.
+The first needs no connection at all. `.geminiBrowser` is not a transport: it loads Google AI Mode
+(`https://www.google.com/search?q={query}&udm=50&sourceid=chrome&ie=UTF-8`) in the palette, or in Arc
+on ⌘↵. The next three name a model from an installed command and carry
 no credential. `.api` points at one `AIConnection`; `AIProviderKind` exposes four named presets plus a
 custom OpenAI-compatible route. Decoding still accepts the old `.chatGPT` spelling and writes it back
 as `.codex`, so an existing selection survives the rename.
@@ -205,10 +209,12 @@ a debug description written for a log, so each case maps to a plain sentence ins
 
 The built-in `AI Chat` launcher command enters `AIScreen`, and carries a bindable global shortcut
 (`HotKeyAction.command(.aiChat)`) that does the same thing from any app; Tab from the launcher is the
-third way in. Settings → AI holds both the recorder and a checkbox for the command's place in launcher
+third way in. A second press of that shortcut while chat is showing opens Chat History; a press while
+history is showing hides the palette. Settings → AI holds both the recorder and a checkbox for the command's place in launcher
 search; the shortcut keeps working while the command is hidden, and does nothing at all while the
 feature is off. The palette search field becomes the single-line composer. The footer pill and
-Return are one action, `activate`: Send, or Stop while a response streams — an empty composer sends
+Return are one action, `activate`: Send, Stop while a response streams, or Open in Arc when Google AI
+Mode is showing and the composer is empty — an empty composer on a normal chat sends
 nothing, so the pill never needs a disabled state. The header's trailing model switcher uses the
 same in-window menu control as Clipboard's type filter and changes the chat route for the next
 message. For installed routes and OpenRouter models whose catalog reports the capability, it also
@@ -243,7 +249,7 @@ Two palette modes carry the feature, and neither changes the shell's rules:
 
 | Mode | Screen | Body |
 | --- | --- | --- |
-| `.ai` | `AIScreen` | `ChatTranscriptView` |
+| `.ai` | `AIScreen` | `ChatTranscriptView`, or `AIWebView` for a Gemini Browser search |
 | `.aiHistory` | `ChatHistoryScreen` | `ChatHistoryList` + preview, bucketed by day like Clipboard |
 
 Chat History backs out to Chat; both are sub-screens, so the header shows the back chevron. The
@@ -297,9 +303,13 @@ and `MCPCoordinator` the twentieth.
 - Setting `Keep conversations` to 7 days drops older chats from ⌘K → Chat History and shrinks
   `ai-chats.sqlite3`. Switching AI off, waiting past a boundary and switching back on prunes nothing
   that was saved before it went off.
+- Choose Google Gemini (Browser), send a query, and confirm the palette shows Google AI Mode
+  (`udm=50`). A second Command-Shift-E (or the recorded AI Chat shortcut) opens Chat History.
+- Quick Actions' model picker does not list Google Gemini (Browser), and a shortcut never pastes a
+  fake "opened in browser" reply.
 - Harnesses: `ai-provider-test` (endpoints, request bodies, stream decoding, persistence repair,
-  Codex framing, on-device routing), `ai-chat-test` (`ChatSession`, `MarkdownBlock`,
-  `ChatHistoryStore`, `AIToolLoopProvider`),
+  Codex framing, on-device routing, `.geminiBrowser` round-trip), `ai-chat-test` (`ChatSession`,
+  `MarkdownBlock`, `ChatHistoryStore`, `AIToolLoopProvider`, `GeminiBrowserSearch`),
   `codex-turn-test` (the Stop path, driven against a stub app-server stalled where Stop races the
   turn ID, plus the no-config-mutation boundary), `installed-ai-test` (Claude/OpenCode flags, prompt
   framing, streaming and cleanup) and `apple-intelligence-test` (status copy, snapshot deltas,
@@ -362,6 +372,7 @@ transport code at all.
 | OpenAI | not offered | `image_url` part, assumed supported | `file` part with `filename` and a `file_data` data URL | `tools` + `role: "tool"` turns |
 | Gemini / compatible | not offered | `image_url` part, assumed supported | never — a gateway that has not implemented the part bills the upload before rejecting it | `tools` + `role: "tool"` turns |
 | Anthropic | not offered | base64 `image` block | base64 `document` block, ahead of the text block | `tools` + `tool_use` / `tool_result` blocks |
+| Google Gemini (Browser) | the Google AI Mode page itself | never | never | never |
 
 A search is part of the reply, not a status: `item/started` for a `webSearch` item appends a
 `ChatSearch` to the streaming message pinned at the text length so far, `item/completed` (or the

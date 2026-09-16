@@ -11,6 +11,7 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
     let select: (AIModelSelection?) -> Void
     @ViewBuilder let modelLabel: () -> ModelLabel
     @ViewBuilder let effortLabel: () -> EffortLabel
+    var includeGeminiBrowser = true
 
     var body: some View {
         if modelGroups.isEmpty {
@@ -46,7 +47,8 @@ struct AIModelSelectionRows<ModelLabel: View, EffortLabel: View>: View {
 
     private var modelGroups: [AIModelOptionGroup] {
         AIModelOption.availableGroups(
-            settings: settings, subscription: subscription, installedAI: installedAI)
+            settings: settings, subscription: subscription, installedAI: installedAI,
+            includeGeminiBrowser: includeGeminiBrowser)
     }
 
     private var efforts: [ChatGPTSubscription.Effort] {

@@ -94,6 +94,9 @@ struct AISettingsView: View {
     }
 
     private var defaultModelFooter: String {
+        if settings.defaultModel == .geminiBrowser {
+            return "Opens Google AI Mode in the palette. No API key. Quick Actions cannot use this route."
+        }
         if settings.defaultModel?.isOnDevice == true {
             return "Apple Intelligence runs on this Mac. No key, no account, and nothing leaves it."
         }

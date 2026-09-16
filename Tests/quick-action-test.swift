@@ -140,6 +140,17 @@ struct QuickActionTests {
         expect(
             withOpenCodeEffort.model == .openCode(model: "provider/model", effort: "max"),
             "Quick Actions persist their own OpenCode reasoning effort")
+
+        onDevice.select(.appleIntelligence)
+        onDevice.select(.geminiBrowser)
+        expect(
+            onDevice.model == .appleIntelligence,
+            "Quick Actions ignore the browser-only chat route")
+        onDevice.select(nil)
+        onDevice.resolveModel(appleIntelligenceAvailable: false, fallback: .geminiBrowser)
+        expect(
+            onDevice.model == nil,
+            "Quick Actions do not resolve to the browser-only chat route")
     }
 
     static func actionsOverrideTheirRoute() {
@@ -162,6 +173,10 @@ struct QuickActionTests {
         expect(store.model(for: .rewrite) == .appleIntelligence, "an action without one follows")
         expect(store.model(for: custom) == api, "a custom action keeps a route of its own")
         expect(store.modelOverride(for: .translate) == nil, "Translate never takes a model")
+        store.setModelOverride(.geminiBrowser, for: .rewrite)
+        expect(
+            store.modelOverride(for: .rewrite) == nil,
+            "Gemini Browser cannot override a Quick Action")
 
         let reopened = QuickActionSettingsStore(defaults: defaults)
         expect(

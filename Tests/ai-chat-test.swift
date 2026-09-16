@@ -38,9 +38,51 @@ struct AIChatTests {
         await theToolLoopRefusesToRunForever()
         await toolOutputIsBoundedBeforeItIsBilled()
         toolUsesPersistAndSettleOnReload()
+        geminiBrowserSearchBuildsExpectedURL()
+        geminiBrowserSearchRestoresTheLastQuery()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
+    }
+
+    static func geminiBrowserSearchBuildsExpectedURL() {
+        let sampleURL = GeminiBrowserSearch.searchURL(for: "SAMPLE")?.absoluteString
+        expect(
+            sampleURL == "https://www.google.com/search?q=SAMPLE&udm=50&sourceid=chrome&ie=UTF-8",
+            "Gemini browser search URL matches Google AI Mode format")
+        let encodedURL = GeminiBrowserSearch.searchURL(for: "  hello world?  ")?.absoluteString
+        expect(
+            encodedURL == "https://www.google.com/search?q=hello%20world?&udm=50&sourceid=chrome&ie=UTF-8",
+            "Gemini browser search trims and escapes the query")
+        expect(
+            GeminiBrowserSearch.searchURL(for: "   ") == nil,
+            "Gemini browser search ignores a blank query")
+    }
+
+    static func geminiBrowserSearchRestoresTheLastQuery() {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tinycast-ai-gemini-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = ChatHistoryStore(directory: directory)
+        let chat = AIChatState(history: store)
+        guard
+            let first = GeminiBrowserSearch.searchURL(for: "one"),
+            let second = GeminiBrowserSearch.searchURL(for: "two")
+        else {
+            expect(false, "Gemini browser search URLs build")
+            return
+        }
+        chat.showBrowserSearch(query: "one", url: first)
+        chat.showBrowserSearch(query: "two", url: second)
+        expect(chat.activeWebURL == second, "a later search replaces the page")
+
+        let id = chat.session.id
+        let reopening = AIChatState(history: store)
+        expect(reopening.open(id: id), "a saved Gemini browser search reopens")
+        expect(
+            reopening.activeWebURL == second,
+            "reopening restores the last Google AI Mode query, not the first")
     }
 
     /// A reply that searched and called tools has to render them in the order they happened.

@@ -460,6 +460,7 @@
 		BFC17B1BD5D239E0CCD56DDF /* QuickActionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DBA322BA1F117530075F51 /* QuickActionFailure.swift */; };
 		C05022DE7B77920ECFB177EE /* LauncherItemsTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934A79BF0F9B66225E5C38CE /* LauncherItemsTable.swift */; };
 		C0642512B709EF0517ABF4CB /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C37CCD024267EB21876C7E9 /* AppDelegate.swift */; };
+		C09DDED907373E710E816DDE /* GeminiBrowserLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50705FC2B949AEBBC434AA84 /* GeminiBrowserLauncher.swift */; };
 		C1FC3507BFC408DCD7F142D8 /* ExtensionCommandMetadataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4C0743DE901F5E248991B4 /* ExtensionCommandMetadataStore.swift */; };
 		C215695FE671BC591DC99C2B /* DialogPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDB241B179A08518424F7C1B /* DialogPanel.swift */; };
 		C21CAD7076793A5625F6B80C /* ChatHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B715A0256D2D0DDE1D28FC98 /* ChatHistoryStore.swift */; };
@@ -502,6 +503,7 @@
 		D07F272D0E095B6000D53716 /* NotesCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F5AFB680B55BBAFF2207F99 /* NotesCoordinator.swift */; };
 		D19969C92342E025A16443B5 /* CalcTokenizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C64977153EF104F583008 /* CalcTokenizer.swift */; };
 		D1F9C28CA4048480DB818EE9 /* LauncherList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 132C5A534C02305C1A29CC74 /* LauncherList.swift */; };
+		D203633C524BC1D05A79A6EB /* AIWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F835DA561AB08687B697603 /* AIWebView.swift */; };
 		D37F4361928A38602002FAEF /* MCPSettingsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00ECBD55353C83A7F4E93592 /* MCPSettingsSection.swift */; };
 		D39C8F6535F028FF79A19AE4 /* WindowLayoutEntryPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6F27259003BDECA2054FC67 /* WindowLayoutEntryPicker.swift */; };
 		D3C7265B00695CE274ED5A23 /* ExtensionRefreshIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996CF61F3B13A573B8D5A11F /* ExtensionRefreshIndicator.swift */; };
@@ -569,6 +571,7 @@
 		ECD777BD408E9DC2C93CFC1B /* CalcUnitExpression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639F73227BB0A4B9CD889D81 /* CalcUnitExpression.swift */; };
 		ED62826E3D7CEB357865F9EB /* CalcDimension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666E0A469BE1984BEF1A9A50 /* CalcDimension.swift */; };
 		ED751C8FC1EFC4E9C07AE98F /* FileSearchFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE21578FB7500CB744855654 /* FileSearchFilter.swift */; };
+		ED80740E01B8C5B5DDAD50D6 /* GeminiBrowserSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B7FEF50D493693642780905 /* GeminiBrowserSearch.swift */; };
 		EDD7861202ECC1B0FA3B278E /* FileSearchResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7420F642776452B469182D0 /* FileSearchResult.swift */; };
 		EE6A9E899566ACCB8258D901 /* WindowManagementSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD0A6DDC1C30A6E2C6DF7E7D /* WindowManagementSettingsView.swift */; };
 		EEB7F6A6AC8B53FDD607ED03 /* AIConversationOpenPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CEAD8FAB5CD097D8F1C851 /* AIConversationOpenPolicy.swift */; };
@@ -669,6 +672,7 @@
 		0AB691265C48648210F1F6D7 /* WindowLayoutPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLayoutPreview.swift; sourceTree = "<group>"; };
 		0ADFFB5180991764FB13FE0B /* ExtensionPackageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPackageManager.swift; sourceTree = "<group>"; };
 		0B2FAC737503B853DE6B5ED4 /* MeetingCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingCardView.swift; sourceTree = "<group>"; };
+		0B7FEF50D493693642780905 /* GeminiBrowserSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiBrowserSearch.swift; sourceTree = "<group>"; };
 		0C3B9645DB2293FA144B5AA2 /* Paster.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paster.swift; sourceTree = "<group>"; };
 		0CFA4726A74C5CCA6E301665 /* DialogChip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogChip.swift; sourceTree = "<group>"; };
 		0D4F22647E4E1BA19F0FC520 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
@@ -826,6 +830,7 @@
 		4FAE24CC14F7DFECD1BD7FB1 /* PopoverMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopoverMenu.swift; sourceTree = "<group>"; };
 		4FBBC69BC9727C5E3FE77120 /* ExtensionSearchAccessory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionSearchAccessory.swift; sourceTree = "<group>"; };
 		4FBE70702D22F894C6B1A790 /* AITool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AITool.swift; sourceTree = "<group>"; };
+		50705FC2B949AEBBC434AA84 /* GeminiBrowserLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiBrowserLauncher.swift; sourceTree = "<group>"; };
 		50A8322A12267B2A82422281 /* CalcNumberBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalcNumberBase.swift; sourceTree = "<group>"; };
 		50E2E570E54DEEF29FF2B65E /* NotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesView.swift; sourceTree = "<group>"; };
 		5133D376B62B69B9C8F03590 /* ExtensionRefreshPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRefreshPolicy.swift; sourceTree = "<group>"; };
@@ -897,6 +902,7 @@
 		6E06AA30E7BA44BC211B667F /* SnippetsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetsScreen.swift; sourceTree = "<group>"; };
 		6EBB9959DB6CA493D241080C /* AIAttachmentPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAttachmentPolicy.swift; sourceTree = "<group>"; };
 		6F2CBDE3042FDA4FCA561857 /* MCPComposerAddress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPComposerAddress.swift; sourceTree = "<group>"; };
+		6F835DA561AB08687B697603 /* AIWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIWebView.swift; sourceTree = "<group>"; };
 		70133624ED99C61545B7656B /* AIConnectionEditorSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIConnectionEditorSheet.swift; sourceTree = "<group>"; };
 		70F987A185161E857B7A030B /* PaletteShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaletteShortcut.swift; sourceTree = "<group>"; };
 		71B96B69CB4E52319BB3EC7D /* FileSearchService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSearchService.swift; sourceTree = "<group>"; };
@@ -1537,6 +1543,7 @@
 				EAC662BDA6856590DCF96B94 /* AIChatState.swift */,
 				539938F5D4D2AFEE587113D3 /* AIModelMenu.swift */,
 				27021D72339800AA6DA3D3FF /* AIScreen.swift */,
+				6F835DA561AB08687B697603 /* AIWebView.swift */,
 				030E67F6AC9A292F385FB5A5 /* ChatCopyButton.swift */,
 				A061D1B64684905BA0E998C5 /* ChatHistoryScreen.swift */,
 				A8247D97D304215156447FF3 /* ChatHistoryView.swift */,
@@ -1892,6 +1899,7 @@
 				8F29EE2711B96305EE10B8D8 /* ChatMessage.swift */,
 				1E95EA1EBD6E4B5ECE149FA0 /* ChatSession.swift */,
 				C49AE1E917BF6EA7783F4CAD /* CodexAppServerProtocol.swift */,
+				0B7FEF50D493693642780905 /* GeminiBrowserSearch.swift */,
 				A76D9592F0809DEC9993684A /* InstalledAI.swift */,
 				D817AF0E23DDCC95147B5AFB /* InstalledAIStream.swift */,
 				EB0E63A5CDC274306555E3A8 /* JSONValue.swift */,
@@ -2814,6 +2822,7 @@
 				B715A0256D2D0DDE1D28FC98 /* ChatHistoryStore.swift */,
 				7355ACD6D1BE7BC7FCA26BD2 /* CodexAppServerClient.swift */,
 				1E82DD04042376EBDEF3E84C /* CodexTurnRunner.swift */,
+				50705FC2B949AEBBC434AA84 /* GeminiBrowserLauncher.swift */,
 				096F955B26BAEE5AED65B559 /* HTTPAIProvider.swift */,
 				AD0BCEEE45732BE94136EEA8 /* InstalledAIManager.swift */,
 				E08F20B0B823443E176F1566 /* InstalledCLIProvider.swift */,
@@ -3087,6 +3096,7 @@
 				4D8C05DD67FAB9F2DA1F31FB /* AIStreamDecoder.swift in Sources */,
 				19F36636F27933FA8278642A /* AITool.swift in Sources */,
 				184F26705A2A2DB127CD90D6 /* AIToolLoopProvider.swift in Sources */,
+				D203633C524BC1D05A79A6EB /* AIWebView.swift in Sources */,
 				F4A75F90028F57D6DC1EF7DB /* ASCIIKeyboardLayout.swift in Sources */,
 				FDBA08E1FF8874D06FE6ACB8 /* AXMenuAccess.swift in Sources */,
 				7EEC2391D9E341626A2661E2 /* AXScreens.swift in Sources */,
@@ -3346,6 +3356,8 @@
 				0CC2291DE8806FDFB478F8A0 /* FileSearchSurface.swift in Sources */,
 				303FC5342B61A7862EBC1C32 /* FocusRelease.swift in Sources */,
 				7833FD6E0A6036954FE285CE /* FrequentEmojiStore.swift in Sources */,
+				C09DDED907373E710E816DDE /* GeminiBrowserLauncher.swift in Sources */,
+				ED80740E01B8C5B5DDAD50D6 /* GeminiBrowserSearch.swift in Sources */,
 				C5F60D8681235B95DAA3314F /* GeneralSettingsView.swift in Sources */,
 				9F50314FD939DE2B6C5434A1 /* HTTPAIProvider.swift in Sources */,
 				A500AF3BF8910B335A7A936C /* HUDPanel.swift in Sources */,

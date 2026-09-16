@@ -54,8 +54,12 @@ final class AIChatCoordinator {
 
     func showChat() {
         guard settings.aiEnabled else { return }
-        // Not `togglePalette`: the open policy decides a chat only on the way in.
-        guard !paletteCoordinator.isShowing(.ai) else {
+        // Second press opens history: the same chord should reach saved chats, not just close.
+        if paletteCoordinator.isShowing(.ai) {
+            showHistory()
+            return
+        }
+        if paletteCoordinator.isShowing(.aiHistory) {
             paletteCoordinator.hidePalette()
             return
         }
@@ -108,8 +112,23 @@ final class AIChatCoordinator {
     }
 
     @discardableResult
-    func send(_ input: String) -> Bool {
+    func send(_ input: String, openDirectlyInArc: Bool = false) -> Bool {
         guard settings.aiEnabled else { return false }
+        let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty || !chat.pendingAttachments.isEmpty else { return false }
+
+        if core.aiSettings.defaultModel == .geminiBrowser {
+            guard let url = GeminiBrowserSearch.searchURL(for: text) else { return false }
+            if openDirectlyInArc {
+                GeminiBrowserLauncher.openInArc(url: url)
+                paletteCoordinator.hidePalette()
+                return true
+            }
+            chat.showBrowserSearch(query: text, url: url)
+            return true
+        }
+
+        chat.clearBrowserSearch()
         do {
             let webSearch = core.aiSettings.webSearchEnabled && capabilities.webSearch
             let address = MCPComposerAddress.parse(input, slugs: core.mcpCoordinator.slugs)
@@ -123,6 +142,13 @@ final class AIChatCoordinator {
         } catch {
             chat.report(error.localizedDescription)
             return false
+        }
+    }
+
+    func openCurrentBrowserSearchInArc() {
+        if let url = chat.activeWebURL {
+            GeminiBrowserLauncher.openInArc(url: url)
+            paletteCoordinator.hidePalette()
         }
     }
 
@@ -185,6 +211,7 @@ final class AIChatCoordinator {
     /// What the selected model can take; the footer offers only what applies.
     var capabilities: AIModelCapabilities {
         switch core.aiSettings.defaultModel {
+        case .geminiBrowser?: return .geminiBrowser
         case .appleIntelligence?: return .appleIntelligence
         case .codex?: return .codex
         case .claude?, .openCode?:
@@ -413,6 +440,7 @@ final class AIChatCoordinator {
     /// Shortened here, not by layout: a flexible label would take the row from the search field.
     var selectedModelTitle: String {
         guard let selected = core.aiSettings.defaultModel else { return "Choose Model" }
+        if selected == .geminiBrowser { return "Google Gemini" }
         let title = selectedModelOption?.title ?? selected.model
         guard title.count > Self.maxModelTitleLength else { return title }
         let keep = Self.maxModelTitleLength / 2
@@ -424,6 +452,7 @@ final class AIChatCoordinator {
     /// From the selection, not the loaded list: the list arrives after the picker first paints.
     var selectedModelIcon: PopoverMenuIcon {
         switch core.aiSettings.defaultModel {
+        case .geminiBrowser?: return .asset(AIBrand.gemini.assetName)
         case .appleIntelligence?: return AIModelOption.appleIntelligenceIcon
         case .codex?: return .asset(AIBrand.openAI.assetName)
         case .claude?: return .asset(AIBrand.claude.assetName)
@@ -460,10 +489,11 @@ final class AIChatCoordinator {
     }
 
     func selectModel(_ option: AIModelOption) {
-        core.aiSettings.select(
-            AIModelOption.withDefaultEffort(
-                option.selection, settings: core.aiSettings,
-                subscription: core.chatGPTSubscription, installedAI: core.installedAI))
+        let selection = AIModelOption.withDefaultEffort(
+            option.selection, settings: core.aiSettings,
+            subscription: core.chatGPTSubscription, installedAI: core.installedAI)
+        core.aiSettings.select(selection)
+        if selection != .geminiBrowser { chat.clearBrowserSearch() }
     }
 
     var reasoningEfforts: [ChatGPTSubscription.Effort] {
@@ -495,6 +525,7 @@ final class AIChatCoordinator {
     }
 
     func availability() -> String? {
+        if core.aiSettings.defaultModel == .geminiBrowser { return nil }
         do {
             _ = try core.aiProvider()
             return nil
@@ -515,7 +546,7 @@ struct AIModelOption: Identifiable {
     @MainActor
     static func availableGroups(
         settings: AISettingsStore, subscription: ChatGPTSubscriptionManager,
-        installedAI: InstalledAIManager
+        installedAI: InstalledAIManager, includeGeminiBrowser: Bool = true
     ) -> [AIModelOptionGroup] {
         let enabled = settings.enabledInstalledProviders
         let claude = installedAI.status(for: .claude)
@@ -526,7 +557,7 @@ struct AIModelOption: Identifiable {
                 ? subscription.models : [],
             claude: enabled.contains(.claude) && claude.isReady ? claude.models : [],
             openCode: enabled.contains(.openCode) && openCode.isReady ? openCode.models : [],
-            connections: settings.connections)
+            connections: settings.connections, includeGeminiBrowser: includeGeminiBrowser)
     }
 
     /// An unrecognised model keeps the generic sparkle rather than borrowing someone's mark.
@@ -540,7 +571,7 @@ struct AIModelOption: Identifiable {
         codex: [ChatGPTSubscription.Model],
         claude: [InstalledAIModel],
         openCode: [InstalledAIModel],
-        connections: [AIConnection]
+        connections: [AIConnection], includeGeminiBrowser: Bool
     ) -> [AIModelOption] {
         let onDevice =
             appleIntelligence
@@ -575,7 +606,13 @@ struct AIModelOption: Identifiable {
                     menuIcon: icon(AIBrand.resolve(provider: connection.provider, model: model)))
             }
         }
-        return onDevice + codex + claude + openCode + api
+        let geminiBrowser = includeGeminiBrowser
+            ? [
+                AIModelOption(
+                    selection: .geminiBrowser, title: "Google Gemini (Browser)",
+                    sourceTitle: "Google Gemini", menuIcon: .asset(AIBrand.gemini.assetName))
+            ] : []
+        return onDevice + geminiBrowser + codex + claude + openCode + api
     }
 
     private static func groupedCatalog(
@@ -583,12 +620,13 @@ struct AIModelOption: Identifiable {
         codex: [ChatGPTSubscription.Model],
         claude: [InstalledAIModel],
         openCode: [InstalledAIModel],
-        connections: [AIConnection]
+        connections: [AIConnection], includeGeminiBrowser: Bool
     ) -> [AIModelOptionGroup] {
         var groups: [AIModelOptionGroup] = []
         for option in catalog(
             appleIntelligence: appleIntelligence, codex: codex, claude: claude,
-            openCode: openCode, connections: connections)
+            openCode: openCode, connections: connections,
+            includeGeminiBrowser: includeGeminiBrowser)
         {
             if groups.last?.id == option.selection.source {
                 groups[groups.count - 1].options.append(option)
@@ -611,7 +649,7 @@ struct AIModelOption: Identifiable {
         let model = selection.model
         let effort: String?
         switch selection.source {
-        case .appleIntelligence:
+        case .appleIntelligence, .geminiBrowser:
             return selection
         case .codex:
             effort = subscription.models.first { $0.id == model }?.resolvedEffort(nil)
@@ -633,7 +671,7 @@ struct AIModelOption: Identifiable {
         guard let selection else { return [] }
         let model = selection.model
         switch selection.source {
-        case .appleIntelligence:
+        case .appleIntelligence, .geminiBrowser:
             return []
         case .codex:
             return subscription.models.first { $0.id == model }?.efforts ?? []

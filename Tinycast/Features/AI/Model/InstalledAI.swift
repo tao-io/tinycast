@@ -60,7 +60,7 @@ extension AIModelSource {
         case .codex: return .codex
         case .claude: return .claude
         case .openCode: return .openCode
-        case .appleIntelligence, .api: return nil
+        case .appleIntelligence, .api, .geminiBrowser: return nil
         }
     }
 }

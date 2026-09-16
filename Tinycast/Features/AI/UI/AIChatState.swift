@@ -9,6 +9,7 @@ final class AIChatState {
     private(set) var isThinking = false
     private(set) var usage: AIUsage?
     private(set) var notice: String?
+    private(set) var activeWebURL: URL?
     /// Files staged for the next message; they go out with whatever is typed next.
     private(set) var pendingAttachments: [ChatAttachment] = []
 
@@ -125,8 +126,25 @@ final class AIChatState {
         finishLast(state: .failed, fallback: "Cancelled")
     }
 
+    func showBrowserSearch(query: String, url: URL) {
+        cancel()
+        activeWebURL = url
+        usage = nil
+        notice = nil
+        clearStaging()
+        session.append(ChatMessage(role: .user, text: query))
+        session.append(
+            ChatMessage(role: .assistant, text: GeminiBrowserSearch.historyText(for: query)))
+        history.save(session)
+    }
+
+    func clearBrowserSearch() {
+        activeWebURL = nil
+    }
+
     func startNewChat() {
         cancel()
+        activeWebURL = nil
         session = ChatSession()
         usage = nil
         notice = nil
@@ -143,12 +161,16 @@ final class AIChatState {
         usage = nil
         notice = nil
         clearStaging()
+        activeWebURL = loaded.messages.last(where: { $0.role == .assistant }).flatMap {
+            GeminiBrowserSearch.searchURL(fromHistoryText: $0.text)
+        }
         return true
     }
 
     func delete(id: UUID) {
         if session.id == id {
             cancel()
+            activeWebURL = nil
             session = ChatSession()
             usage = nil
             notice = nil
@@ -159,6 +181,7 @@ final class AIChatState {
 
     func deleteAll() {
         cancel()
+        activeWebURL = nil
         history.clearAll()
         session = ChatSession()
         usage = nil

@@ -119,6 +119,8 @@ struct AIModelCapabilities: Equatable, Sendable {
         images: true, documents: false, webSearch: true, tools: false)
     /// The on-device model is text-only and reaches nothing, so it offers none of the three.
     static let appleIntelligence = AIModelCapabilities.none
+    static let geminiBrowser = AIModelCapabilities(
+        images: false, documents: false, webSearch: false, tools: false)
 }
 
 enum AIModelSource: Codable, Equatable, Hashable, Sendable {
@@ -127,6 +129,7 @@ enum AIModelSource: Codable, Equatable, Hashable, Sendable {
     case claude
     case openCode
     case api(UUID)
+    case geminiBrowser
 }
 
 enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
@@ -135,10 +138,12 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     case claude(model: String, effort: String?)
     case openCode(model: String, effort: String?)
     case api(connection: UUID, model: String, effort: String?)
+    case geminiBrowser
 
     var source: AIModelSource {
         switch self {
         case .appleIntelligence: return .appleIntelligence
+        case .geminiBrowser: return .geminiBrowser
         case .codex: return .codex
         case .claude: return .claude
         case .openCode: return .openCode
@@ -149,6 +154,7 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     var model: String {
         switch self {
         case .appleIntelligence: return AppleIntelligence.modelID
+        case .geminiBrowser: return "gemini-browser"
         case .codex(let model, _), .claude(let model, _), .openCode(let model, _),
             .api(_, let model, _):
             return model
@@ -160,7 +166,7 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
         case .codex(_, let effort), .claude(_, let effort), .openCode(_, let effort),
             .api(_, _, let effort):
             return effort
-        case .appleIntelligence:
+        case .appleIntelligence, .geminiBrowser:
             return nil
         }
     }
@@ -172,7 +178,7 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
         case .openCode(let model, _): return .openCode(model: model, effort: effort)
         case .api(let connection, let model, _):
             return .api(connection: connection, model: model, effort: effort)
-        case .appleIntelligence: return self
+        case .appleIntelligence, .geminiBrowser: return self
         }
     }
 
@@ -186,6 +192,7 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
         case claude
         case openCode
         case api
+        case geminiBrowser
     }
 
     private enum ValueKeys: String, CodingKey {
@@ -196,6 +203,10 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        if container.contains(.geminiBrowser) {
+            self = .geminiBrowser
+            return
+        }
         if container.contains(.appleIntelligence) {
             self = .appleIntelligence
             return
@@ -232,6 +243,8 @@ enum AIModelSelection: Codable, Equatable, Hashable, Sendable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         switch self {
+        case .geminiBrowser:
+            _ = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .geminiBrowser)
         case .appleIntelligence:
             _ = container.nestedContainer(keyedBy: ValueKeys.self, forKey: .appleIntelligence)
         case .codex(let model, let effort):
