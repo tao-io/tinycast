@@ -1,5 +1,52 @@
 import CoreGraphics
 
+enum PalettePanelPresentation: Equatable {
+    case compact
+    case standard
+    case browser
+
+    private static let browserWidthScale: CGFloat = 1.44
+    private static let browserHeightScale: CGFloat = 1.52
+
+    static func resolve(collapsed: Bool, browserSearch: Bool) -> Self {
+        if browserSearch { return .browser }
+        return collapsed ? .compact : .standard
+    }
+
+    func frame(
+        anchor: CGPoint, standardSize: CGSize, compactHeight: CGFloat,
+        visibleFrame: CGRect, inset: CGFloat
+    ) -> CGRect {
+        switch self {
+        case .compact:
+            return CGRect(
+                x: anchor.x, y: anchor.y - compactHeight,
+                width: standardSize.width, height: compactHeight)
+        case .standard:
+            return CGRect(
+                x: anchor.x, y: anchor.y - standardSize.height,
+                width: standardSize.width, height: standardSize.height)
+        case .browser:
+            let available = visibleFrame.insetBy(dx: inset, dy: inset)
+            let size = CGSize(
+                width: min(standardSize.width * Self.browserWidthScale, available.width),
+                height: min(standardSize.height * Self.browserHeightScale, available.height))
+            let desired = CGPoint(
+                x: anchor.x - (size.width - standardSize.width) / 2,
+                y: anchor.y - size.height)
+            let origin = CGPoint(
+                x: min(max(desired.x, available.minX), available.maxX - size.width),
+                y: min(max(desired.y, available.minY), available.maxY - size.height))
+            return CGRect(origin: origin, size: size)
+        }
+    }
+
+    func anchor(for frame: CGRect, standardWidth: CGFloat) -> CGPoint {
+        let x = self == .browser ? frame.midX - standardWidth / 2 : frame.minX
+        return CGPoint(x: x, y: frame.maxY)
+    }
+}
+
 /// Pure, with every screen fact injected, so this stays testable off a display.
 enum PalettePlacement {
     /// The untouched placement: centred, top edge a fraction of the way down, growing downward.

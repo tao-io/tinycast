@@ -5,11 +5,6 @@ import Foundation
 enum GeminiBrowserLauncher {
     static let arcBundleID = "company.thebrowser.Browser"
 
-    static func openInArc(query: String) {
-        guard let url = GeminiBrowserSearch.searchURL(for: query) else { return }
-        openInArc(url: url)
-    }
-
     static func openInArc(url: URL) {
         let configuration = NSWorkspace.OpenConfiguration()
         if let arcURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: arcBundleID) {

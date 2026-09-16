@@ -62,6 +62,11 @@ final class ChatHistoryStore {
           text_offset INTEGER NOT NULL,
           PRIMARY KEY(message_id, position)
         );
+        CREATE TABLE IF NOT EXISTS conversation_browser_urls(
+          conversation_id TEXT PRIMARY KEY NOT NULL
+            REFERENCES conversations(id) ON DELETE CASCADE,
+          url TEXT NOT NULL
+        );
         CREATE INDEX IF NOT EXISTS messages_by_conversation
           ON messages(conversation_id, position);
         CREATE INDEX IF NOT EXISTS conversations_by_recency
@@ -164,13 +169,15 @@ final class ChatHistoryStore {
                     toolUses: toolUses[messageID] ?? []))
         }
         return ChatSession(
-            id: id, createdAt: createdAt, updatedAt: updatedAt, messages: messages)
+            id: id, createdAt: createdAt, updatedAt: updatedAt, messages: messages,
+            browserURL: browserURL(for: id, in: database))
     }
 
     func save(_ session: ChatSession) {
         guard !session.messages.isEmpty, ensureDatabase(), let database else { return }
         guard sqlite3_exec(database, "BEGIN IMMEDIATE", nil, nil, nil) == SQLITE_OK else { return }
-        guard saveConversation(session, in: database), rewriteTail(of: session, database: database)
+        guard saveConversation(session, in: database), saveBrowserURL(of: session, in: database),
+            rewriteTail(of: session, database: database)
         else {
             sqlite3_exec(database, "ROLLBACK", nil, nil, nil)
             return
@@ -266,6 +273,40 @@ final class ChatHistoryStore {
         sqlite3_bind_double(statement, 5, summary.updatedAt.timeIntervalSince1970)
         sqlite3_bind_int64(statement, 6, Int64(summary.messageCount))
         return sqlite3_step(statement) == SQLITE_DONE
+    }
+
+    private func saveBrowserURL(of session: ChatSession, in database: OpaquePointer) -> Bool {
+        guard let url = session.browserURL else {
+            guard
+                let statement = prepare(
+                    "DELETE FROM conversation_browser_urls WHERE conversation_id = ?;",
+                    in: database)
+            else { return false }
+            defer { sqlite3_finalize(statement) }
+            bind(session.id.uuidString, to: statement, at: 1)
+            return sqlite3_step(statement) == SQLITE_DONE
+        }
+        let sql = """
+            INSERT INTO conversation_browser_urls(conversation_id, url) VALUES(?, ?)
+            ON CONFLICT(conversation_id) DO UPDATE SET url = excluded.url;
+            """
+        guard let statement = prepare(sql, in: database) else { return false }
+        defer { sqlite3_finalize(statement) }
+        bind(session.id.uuidString, to: statement, at: 1)
+        bind(url.absoluteString, to: statement, at: 2)
+        return sqlite3_step(statement) == SQLITE_DONE
+    }
+
+    private func browserURL(for id: UUID, in database: OpaquePointer) -> URL? {
+        guard
+            let statement = prepare(
+                "SELECT url FROM conversation_browser_urls WHERE conversation_id = ? LIMIT 1;",
+                in: database)
+        else { return nil }
+        defer { sqlite3_finalize(statement) }
+        bind(id.uuidString, to: statement, at: 1)
+        guard sqlite3_step(statement) == SQLITE_ROW else { return nil }
+        return URL(string: text(statement, 0))
     }
 
     /// A session only appends or replaces its last, so a save rewrites the stored tail alone.

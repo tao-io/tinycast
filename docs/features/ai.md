@@ -136,6 +136,13 @@ no credential. `.api` points at one `AIConnection`; `AIProviderKind` exposes fou
 custom OpenAI-compatible route. Decoding still accepts the old `.chatGPT` spelling and writes it back
 as `.codex`, so an existing selection survives the rename.
 
+Each Gemini Browser query from Tinycast's composer creates a new chat and history row. The Google
+**Ask anything** field continues the open Google thread. Tinycast saves each allowed Google Search URL
+after navigation. History and **Open in Arc** use that saved URL. An old row without one rebuilds the
+first query URL. `AIWebView` hides semantic and top-level Google chrome, but keeps the conversation and
+its composer interactive. It scales the page for the palette instead of scraping an answer into a
+native transcript. Browser search also expands the palette within the display's visible frame.
+
 | Setting | Transport | Default base URL |
 | --- | --- | --- |
 | Apple Intelligence | Foundation Models, on device | none |
@@ -303,8 +310,11 @@ and `MCPCoordinator` the twentieth.
 - Setting `Keep conversations` to 7 days drops older chats from ⌘K → Chat History and shrinks
   `ai-chats.sqlite3`. Switching AI off, waiting past a boundary and switching back on prunes nothing
   that was saved before it went off.
-- Choose Google Gemini (Browser), send a query, and confirm the palette shows Google AI Mode
-  (`udm=50`). A second Command-Shift-E (or the recorded AI Chat shortcut) opens Chat History.
+- Choose Google Gemini (Browser), send two queries, and confirm each query creates a history row.
+- Add a follow-up in Google's **Ask anything** field. Reopen that history row and confirm both turns
+  return. Confirm **Open in Arc** opens the same thread URL.
+- Confirm the palette shows a large Google AI Mode conversation without Google navigation chrome.
+  A second Command-Shift-E (or the recorded AI Chat shortcut) opens Chat History.
 - Quick Actions' model picker does not list Google Gemini (Browser), and a shortcut never pastes a
   fake "opened in browser" reply.
 - Harnesses: `ai-provider-test` (endpoints, request bodies, stream decoding, persistence repair,
