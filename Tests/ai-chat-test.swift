@@ -39,9 +39,11 @@ struct AIChatTests {
         await toolOutputIsBoundedBeforeItIsBilled()
         toolUsesPersistAndSettleOnReload()
         geminiBrowserSearchBuildsExpectedURL()
+        geminiBrowserSearchAllowsThreadURLs()
         geminiBrowserSearchesStayIndependent()
         geminiBrowserSearchPersistsTheCurrentThreadURL()
         geminiBrowserSearchFallsBackForLegacyHistory()
+        geminiBrowserOpenInArcUsesTheLatestURL()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -59,6 +61,33 @@ struct AIChatTests {
         expect(
             GeminiBrowserSearch.searchURL(for: "   ") == nil,
             "Gemini browser search ignores a blank query")
+    }
+
+    static func geminiBrowserSearchAllowsThreadURLs() {
+        guard let first = GeminiBrowserSearch.searchURL(for: "one") else {
+            expect(false, "Gemini browser search URLs build")
+            return
+        }
+        expect(GeminiBrowserSearch.isAllowed(first), "the first-query AI Mode URL is allowed")
+        expect(
+            allowsBrowserURL("https://www.google.com/search?q=one&udm=50&mstk=abc&mtid=xyz"),
+            "a thread URL with mstk and mtid stays allowed")
+        expect(
+            allowsBrowserURL("https://google.com/search?q=one&mstk=abc"),
+            "thread parameters alone still identify the Google thread")
+        expect(
+            !allowsBrowserURL("https://www.google.com/search?q=one"),
+            "a plain Google search is not AI Mode")
+        expect(
+            !allowsBrowserURL("http://www.google.com/search?q=one&udm=50"),
+            "http is not allowed")
+        expect(
+            !allowsBrowserURL("https://example.com/search?q=one&udm=50"),
+            "a non-Google host is not allowed")
+    }
+
+    static func allowsBrowserURL(_ string: String) -> Bool {
+        URL(string: string).map(GeminiBrowserSearch.isAllowed) ?? false
     }
 
     static func geminiBrowserSearchesStayIndependent() {
@@ -103,6 +132,7 @@ struct AIChatTests {
                 string:
                     "https://www.google.com/search?q=one&udm=50&sourceid=chrome&ie=UTF-8&mstk=abc&mtid=xyz"
             ),
+            let resumed = URL(string: "https://www.google.com/search?q=one&mstk=abc&mtid=xyz"),
             let outside = URL(string: "https://example.com/search?q=one&udm=50")
         else {
             expect(false, "Gemini browser thread URLs build")
@@ -111,14 +141,48 @@ struct AIChatTests {
         chat.showBrowserSearch(query: "one", url: first)
         let id = chat.session.id
         chat.updateBrowserURL(thread)
+        chat.updateBrowserURL(resumed)
         chat.updateBrowserURL(outside)
 
-        expect(chat.activeWebURL == thread, "an outside navigation cannot replace the saved thread")
+        expect(chat.activeWebURL == resumed, "an outside navigation cannot replace the saved thread")
         let reopening = AIChatState(history: ChatHistoryStore(directory: directory))
         expect(reopening.open(id: id), "a saved Gemini browser thread reopens")
         expect(
+            reopening.activeWebURL == resumed,
+            "reopening loads the latest saved thread URL")
+        expect(
+            reopening.session.browserURL == resumed,
+            "the persisted conversation URL is the thread, not the first query")
+    }
+
+    static func geminiBrowserOpenInArcUsesTheLatestURL() {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tinycast-ai-gemini-arc-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = ChatHistoryStore(directory: directory)
+        let chat = AIChatState(history: store)
+        guard
+            let first = GeminiBrowserSearch.searchURL(for: "one"),
+            let thread = URL(
+                string:
+                    "https://www.google.com/search?q=one&udm=50&sourceid=chrome&ie=UTF-8&mstk=abc&mtid=xyz"
+            )
+        else {
+            expect(false, "Gemini browser thread URLs build")
+            return
+        }
+        chat.showBrowserSearch(query: "one", url: first)
+        let id = chat.session.id
+        expect(chat.activeWebURL == first, "Open in Arc starts on the first-query URL")
+        chat.updateBrowserURL(thread)
+        expect(chat.activeWebURL == thread, "Open in Arc follows the latest saved thread URL")
+
+        let reopening = AIChatState(history: ChatHistoryStore(directory: directory))
+        expect(reopening.open(id: id), "a saved Gemini browser thread reopens for Open in Arc")
+        expect(
             reopening.activeWebURL == thread,
-            "reopening and Open in Arc use the latest saved thread URL")
+            "Open in Arc after reopen uses the saved thread URL")
     }
 
     static func geminiBrowserSearchFallsBackForLegacyHistory() {

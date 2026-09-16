@@ -48,7 +48,7 @@ struct AIWebView: NSViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.preferences.minimumFontSize = 13
         configuration.userContentController.add(
-            context.coordinator, name: Self.navigationHandler)
+            context.coordinator, contentWorld: .page, name: Self.navigationHandler)
         configuration.userContentController.addUserScript(
             WKUserScript(
                 source: Self.readerScript, injectionTime: .atDocumentEnd,
@@ -61,6 +61,12 @@ struct AIWebView: NSViewRepresentable {
             + "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
         webView.load(URLRequest(url: url))
         return webView
+    }
+
+    static func dismantleNSView(_ webView: WKWebView, coordinator: Coordinator) {
+        webView.navigationDelegate = nil
+        webView.configuration.userContentController.removeScriptMessageHandler(
+            forName: navigationHandler, contentWorld: .page)
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
@@ -76,7 +82,9 @@ struct AIWebView: NSViewRepresentable {
     private static let readerScript = #"""
         (() => {
           const styleID = "tinycast-reader-style";
-          const keepComposer = ':has(textarea), :has(input[aria-label*="Ask" i]), :has([contenteditable="true"][aria-label*="Ask" i])';
+          const keepComposer =
+            ':has(textarea), :has(input[aria-label*="Ask" i]), ' +
+            ':has([contenteditable="true"][aria-label*="Ask" i])';
           if (!document.getElementById(styleID)) {
             const style = document.createElement("style");
             style.id = styleID;

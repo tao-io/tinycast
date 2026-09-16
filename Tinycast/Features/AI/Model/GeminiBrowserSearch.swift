@@ -33,6 +33,8 @@ enum GeminiBrowserSearch {
             ["google.com", "www.google.com"].contains(components.host?.lowercased() ?? ""),
             components.path == "/search"
         else { return false }
-        return components.queryItems?.contains { $0.name == "udm" && $0.value == "50" } == true
+        let items = components.queryItems ?? []
+        return items.contains { $0.name == "udm" && $0.value == "50" }
+            || items.contains { $0.name == "mstk" || $0.name == "mtid" }
     }
 }

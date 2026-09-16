@@ -132,6 +132,7 @@ struct AIScreen: PaletteScreen {
         if let webURL = chat.activeWebURL {
             return AnyView(
                 AIWebView(url: webURL, onNavigate: coordinator.browserDidNavigate)
+                    .id(chat.session.id)
                     .clipShape(RoundedRectangle(cornerRadius: metrics.radius.card, style: .continuous))
                     .accessibilityLabel("Google AI Mode conversation")
             )
