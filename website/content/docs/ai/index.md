@@ -15,7 +15,8 @@ Turning AI off stops a reply that is still streaming. It does not delete saved c
 ## Opening a chat
 
 - The **AI Chat** command in the launcher.
-- Its own global shortcut, recorded in **Settings → AI**.
+- Its own global shortcut, recorded in **Settings → AI**. Press it again while chat is open to show
+  Chat History; press it on Chat History to close the palette.
 - <kbd>tab</kbd> from the launcher. Whatever you typed is sent straight away as a new question.
 - The **AI Chat** row under "Use … with" at the bottom of any search. See
   [Fallbacks](/docs/launcher/fallbacks).
@@ -85,6 +86,12 @@ it is the default.
 It reads and writes text only, with no web search and no attachments. If Apple Intelligence is
 switched off in System Settings, Tinycast tells you so. **It never quietly moves you to a paid API
 instead.**
+
+### Google Gemini (Browser)
+
+Loads Google AI Mode in the palette. No API key. Type a question and press <kbd>return</kbd>.
+<kbd>⌘</kbd><kbd>return</kbd> opens the same search in Arc (or your default browser if Arc is not
+installed). Quick Actions does not offer this route, because a web page cannot rewrite selected text.
 
 ### Installed AI: Codex, Claude and OpenCode
 

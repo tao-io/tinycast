@@ -126,14 +126,15 @@ final class AIChatState {
         finishLast(state: .failed, fallback: "Cancelled")
     }
 
-    func showBrowserSearch(query: String, url: URL?) {
+    func showBrowserSearch(query: String, url: URL) {
         cancel()
         activeWebURL = url
         usage = nil
         notice = nil
         clearStaging()
         session.append(ChatMessage(role: .user, text: query))
-        session.append(ChatMessage(role: .assistant, text: "Google AI Mode: \(query)"))
+        session.append(
+            ChatMessage(role: .assistant, text: GeminiBrowserSearch.historyText(for: query)))
         history.save(session)
     }
 
@@ -160,15 +161,8 @@ final class AIChatState {
         usage = nil
         notice = nil
         clearStaging()
-        if let userMessage = loaded.messages.first(where: { $0.role == .user })?.text {
-            let isBrowserSearch = loaded.messages.contains { $0.text.hasPrefix("Google AI Mode:") }
-            if isBrowserSearch {
-                activeWebURL = GeminiBrowserLauncher.searchURL(for: userMessage)
-            } else {
-                activeWebURL = nil
-            }
-        } else {
-            activeWebURL = nil
+        activeWebURL = loaded.messages.last(where: { $0.role == .assistant }).flatMap {
+            GeminiBrowserSearch.searchURL(fromHistoryText: $0.text)
         }
         return true
     }

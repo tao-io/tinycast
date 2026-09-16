@@ -474,7 +474,8 @@ final class AppCore {
     func quickActionProvider(for action: QuickAction) throws -> any AIProvider {
         quickActionSettings.repairModel(
             against: aiSettings.connections, fallback: aiSettings.defaultModel)
-        guard let selection = quickActionSettings.model(for: action) ?? aiSettings.defaultModel
+        guard let selection = quickActionSettings.model(for: action) ?? aiSettings.defaultModel,
+            selection != .geminiBrowser
         else {
             throw AIProviderError.unavailable("Choose a model in Settings \u{2192} Quick Actions.")
         }

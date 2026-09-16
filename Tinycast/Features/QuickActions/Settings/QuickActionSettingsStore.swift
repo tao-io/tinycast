@@ -42,6 +42,7 @@ final class QuickActionSettingsStore {
     }
 
     func select(_ selection: AIModelSelection?) {
+        if selection == .geminiBrowser { return }
         model = selection
     }
 
@@ -54,22 +55,36 @@ final class QuickActionSettingsStore {
     }
 
     func setModelOverride(_ selection: AIModelSelection?, for action: QuickAction) {
-        guard !action.usesTranslationFramework, modelOverrides[action.id] != selection else { return }
+        guard
+            !action.usesTranslationFramework, selection != .geminiBrowser,
+            modelOverrides[action.id] != selection
+        else { return }
         modelOverrides[action.id] = selection
     }
 
     /// Nothing chosen takes the route that needs no account, the way chat's own default resolves.
     func resolveModel(appleIntelligenceAvailable: Bool, fallback: AIModelSelection?) {
+        if model == .geminiBrowser { model = nil }
         guard model == nil else { return }
-        model = appleIntelligenceAvailable ? .appleIntelligence : fallback
+        if appleIntelligenceAvailable {
+            model = .appleIntelligence
+        } else if fallback != .geminiBrowser {
+            model = fallback
+        }
     }
 
     /// A removed connection must not leave a route pointing where nothing can answer.
     func repairModel(against connections: [AIConnection], fallback: AIModelSelection?) {
-        if let model, !Self.reaches(model, through: connections) {
-            self.model = fallback
+        if model == .geminiBrowser {
+            self.model = fallback == .geminiBrowser ? nil : fallback
         }
-        updateOverrides { Self.reaches($0, through: connections) ? $0 : nil }
+        if let model, !Self.reaches(model, through: connections) {
+            self.model = fallback == .geminiBrowser ? nil : fallback
+        }
+        updateOverrides {
+            guard $0 != .geminiBrowser else { return nil }
+            return Self.reaches($0, through: connections) ? $0 : nil
+        }
     }
 
     /// A dead override is dropped rather than rerouted, so its action follows `model` again.
@@ -105,12 +120,16 @@ final class QuickActionSettingsStore {
         _ selection: AIModelSelection, available: [AIModelSelection],
         unavailableSources: Set<AIModelSource>, fallback: AIModelSelection?
     ) -> AIModelSelection? {
+        guard selection != .geminiBrowser else {
+            return fallback == .geminiBrowser ? nil : fallback
+        }
         guard selection.source.installedKind != nil else { return selection }
         let sourceModels = available.filter { $0.source == selection.source }
         if sourceModels.contains(where: { $0.model == selection.model }) { return selection }
         if let replacement = sourceModels.first { return replacement }
         guard unavailableSources.contains(selection.source) else { return selection }
-        guard let fallback, !unavailableSources.contains(fallback.source), fallback != selection
+        guard let fallback, fallback != .geminiBrowser,
+            !unavailableSources.contains(fallback.source), fallback != selection
         else { return nil }
         return fallback
     }

@@ -54,8 +54,10 @@ provider protocol and the connections behind it.
 - **Installed providers are ordinary routes.** The model picker reads the same live Codex, Claude and
   OpenCode catalogs as AI Settings. Execution still goes through `AIProviderFactory`, so Quick Actions
   inherit the same installed login, tool restrictions and process cleanup without owning CLI logic.
-- **The model picker is the AI picker.** Both panes render `AIModelOption.groupedCatalog`, with the
-  same provider sections, model labels and provider-supported reasoning levels. An installed-model
+- **The model picker is the AI picker, minus Google Gemini (Browser).** Both panes render
+  `AIModelOption.groupedCatalog`, with the same provider sections, model labels and provider-supported
+  reasoning levels. Quick Actions passes `includeGeminiBrowser: false`: a browser page cannot rewrite a
+  selection. An installed-model
   selection stores its effort in `quickActionModel`, independently of chat's effort. The sheets use the
   same `AIModelSelectionRows`, with **Same as Quick Actions** as the `nil` choice.
 - **The reader's own text gets permissive guardrails.** `AppCore.quickActionProvider()` asks for

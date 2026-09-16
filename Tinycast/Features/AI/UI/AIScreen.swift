@@ -14,12 +14,16 @@ struct AIScreen: PaletteScreen {
 
     let rows = [Row()]
 
-    /// One footer pill for Return's jobs: Open in Arc if viewing search, Stop while streaming, or Send.
+    /// One footer pill for Return's jobs: Send, Stop, or Open in Arc.
     var primaryActionTitle: String {
-        if chat.activeWebURL != nil {
-            return "Open in Arc"
-        }
-        return chat.isStreaming ? "Stop" : "Send"
+        if chat.isStreaming { return "Stop" }
+        if hasDraft { return "Send" }
+        if chat.activeWebURL != nil { return "Open in Arc" }
+        return "Send"
+    }
+
+    private var hasDraft: Bool {
+        !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     func actions(at selection: Int) -> PopoverMenuContent? {
@@ -74,11 +78,11 @@ struct AIScreen: PaletteScreen {
         return PopoverMenuContent(header: chat.session.title, items: items)
     }
 
-    /// Return and the pill are the same action; opens in Arc if web search active, else sends.
+    /// Return and the pill are the same action.
     func activate(at selection: Int) {
         if chat.isStreaming {
             coordinator.stopResponse()
-        } else if !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        } else if hasDraft {
             if coordinator.send(vm.query) {
                 vm.query = ""
             }
@@ -87,9 +91,9 @@ struct AIScreen: PaletteScreen {
         }
     }
 
-    /// ⌘↵ opens directly in Arc browser.
+    /// ⌘↵ opens the search in Arc, falling back to the current page if the composer is empty.
     func secondary(at selection: Int) -> Bool {
-        if !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+        if hasDraft {
             if coordinator.send(vm.query, openDirectlyInArc: true) {
                 vm.query = ""
                 return true

@@ -176,7 +176,8 @@ struct QuickActionsSettingsView: View {
                 effortLabel: {
                     SettingsRowTitle(.quickActionsModel, "Reasoning effort")
                     Text("Applied when the selected model supports reasoning effort.")
-                }
+                },
+                includeGeminiBrowser: false
             )
         } header: {
             SettingsSectionHeader(.quickActionsModel)
@@ -260,7 +261,7 @@ struct QuickActionsSettingsView: View {
     private var modelChoices: [AIModelOption] {
         AIModelOption.availableGroups(
             settings: aiSettings, subscription: core.chatGPTSubscription,
-            installedAI: core.installedAI
+            installedAI: core.installedAI, includeGeminiBrowser: false
         )
         .flatMap(\.options)
     }

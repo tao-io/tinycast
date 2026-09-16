@@ -83,7 +83,7 @@ all day should not bill an API every time. It defaults to **Apple Intelligence**
 Mac for nothing, and falls back to chat's model when Apple Intelligence is not available.
 
 It offers the same models as [AI Chat](/docs/ai#choosing-a-model), including reasoning effort where
-the model supports it.
+the model supports it, except **Google Gemini (Browser)**, which only exists as a chat search.
 
 ### A model for one action
 

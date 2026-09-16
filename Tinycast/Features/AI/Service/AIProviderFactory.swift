@@ -29,7 +29,8 @@ enum AIProviderFactory {
     ) throws -> any AIProvider {
         switch selection {
         case .geminiBrowser:
-            return GeminiBrowserProvider()
+            throw AIProviderError.unavailable(
+                "Google Gemini (Browser) only runs in AI Chat.")
         case .appleIntelligence:
             if let message = AppleIntelligenceProvider.status().message {
                 throw AIProviderError.unavailable(message)

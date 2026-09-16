@@ -14,7 +14,8 @@ struct QuickActionModelPicker: View {
                     inheritedTitle: "Same as Quick Actions",
                     select: { selection = $0 },
                     modelLabel: { Text("Model") },
-                    effortLabel: { Text("Reasoning effort") })
+                    effortLabel: { Text("Reasoning effort") },
+                    includeGeminiBrowser: false)
             }
             .labelsHidden()
             Text("Same as Quick Actions follows the Model section of the Quick Actions pane.")

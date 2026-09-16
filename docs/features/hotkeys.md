@@ -21,9 +21,11 @@ the keycap rendering — only the _engine_ differs.
   is parameterised over the whole catalog and dispatches through `LauncherCoordinator.runCommand`, so a
   new built-in command arrives bindable with no hotkey plumbing of its own, and there is one behaviour
   per command rather than one per invocation route.
-- **A command that opens a palette mode toggles it.** Every one of them enters through
-  `PaletteCoordinator.togglePalette(mode:)`, so a second press closes what the first opened. From a
-  launcher row the palette is in `.launcher`, so the row always re-points instead.
+- **A command that opens a palette mode toggles it**, except AI Chat: a second press of its shortcut
+  while chat is showing opens Chat History, and a press while history is showing hides the palette.
+  Every other one enters through `PaletteCoordinator.togglePalette(mode:)`, so a second press closes
+  what the first opened. From a launcher row the palette is in `.launcher`, so the row always re-points
+  instead.
 - **`HotKeyBinding` is the one thing an action is bound to, and it has two cases with two engines.** A
   `.combo` is a Carbon registration; a `.doubleTap` is recognized by `DoubleTapMonitor`, because Carbon
   cannot see a lone modifier at all. Its `Codable` is the synthesised one.
