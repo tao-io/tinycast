@@ -16,6 +16,8 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     private var anchor: CGPoint?
     /// Live only between mouse-down and mouse-up on a drag handle; nil means a move was ours.
     private var drag: DragSession?
+    /// AppKit reports `setFrame` as a move; this keeps that report from changing the saved anchor.
+    private var positionedFrame: CGRect?
     private let dropGuides = PaletteDropGuideController()
     /// ⌘V: `Edit ▸ Paste` claims it before `sendEvent` whenever the board also carries text.
     private var pasteMonitor: Any?
@@ -245,7 +247,14 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     /// A drag re-anchors the session, so the next resize grows from where the user left it.
     func windowDidMove(_ notification: Notification) {
         guard let panel else { return }
-        let moved = CGPoint(x: panel.frame.minX, y: panel.frame.maxY)
+        if positionedFrame == panel.frame {
+            positionedFrame = nil
+            return
+        }
+        positionedFrame = nil
+        let moved = panelPresentation(
+            collapsed: core.paletteCoordinator.paletteIsCollapsed
+        ).anchor(for: panel.frame, standardWidth: metrics.size.panelWidth)
         anchor = moved
         guard drag != nil else { return }
         trackDrag(to: moved)
@@ -395,12 +404,22 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
 
     /// Size to height and place against the session anchor, so the list grows downward.
     private func positionPanel(_ panel: NSPanel, collapsed: Bool) {
-        guard let anchor = resolveAnchor() else { return }
+        let screen = anchor == nil ? targetScreen() : panel.screen ?? targetScreen()
+        guard let screen, let anchor = resolveAnchor(on: screen) else { return }
         let size = metrics.size
-        let height = collapsed ? size.compactHeight : size.panelHeight
-        let frame = NSRect(
-            x: anchor.x, y: anchor.y - height, width: size.panelWidth, height: height)
+        let frame = panelPresentation(collapsed: collapsed).frame(
+            anchor: anchor,
+            standardSize: CGSize(width: size.panelWidth, height: size.panelHeight),
+            compactHeight: size.compactHeight, visibleFrame: screen.visibleFrame,
+            inset: metrics.spacing.xl)
+        positionedFrame = frame
         panel.setFrame(frame, display: true)
+    }
+
+    private func panelPresentation(collapsed: Bool) -> PalettePanelPresentation {
+        PalettePanelPresentation.resolve(
+            collapsed: collapsed,
+            browserSearch: core.palette.mode == .ai && core.aiChat.activeWebURL != nil)
     }
 
     /// The display to anchor to; never `NSScreen.main`, which follows the focused window.
@@ -409,9 +428,9 @@ final class PaletteWindowController: NSObject, NSWindowDelegate {
     }
 
     /// Cached until hide, so both placements read one `visibleFrame`; a drag outranks the setting.
-    private func resolveAnchor() -> CGPoint? {
+    private func resolveAnchor(on screen: NSScreen) -> CGPoint? {
         if let anchor { return anchor }
-        let resolved = targetScreen().flatMap { restoredAnchor(on: $0) ?? defaultAnchor(on: $0) }
+        let resolved = restoredAnchor(on: screen) ?? defaultAnchor(on: screen)
         anchor = resolved
         return resolved
     }

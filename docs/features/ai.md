@@ -141,7 +141,7 @@ Each Gemini Browser query from Tinycast's composer creates a new chat and histor
 after navigation. History and **Open in Arc** use that saved URL. An old row without one rebuilds the
 first query URL. `AIWebView` hides semantic and top-level Google chrome, but keeps the conversation and
 its composer interactive. It scales the page for the palette instead of scraping an answer into a
-native transcript.
+native transcript. Browser search also expands the palette within the display's visible frame.
 
 | Setting | Transport | Default base URL |
 | --- | --- | --- |

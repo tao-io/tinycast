@@ -45,6 +45,10 @@ struct RootPaletteView: View {
     /// Compact vs. full; the source of truth is on `AppCore`, so the two can't disagree.
     private var isCollapsed: Bool { core.paletteCoordinator.paletteIsCollapsed }
 
+    private var presentsBrowserSearch: Bool {
+        vm.mode == .ai && core.aiChat.activeWebURL != nil
+    }
+
     /// The current mode's screen: its rows are the visible order the flat selection indexes.
     private var screen: any PaletteScreen {
         switch vm.mode {
@@ -409,6 +413,9 @@ struct RootPaletteView: View {
             .modifier(SearchFieldHiding(hidden: hidesSearchField, apply: applySearchFieldHiding))
             // Several paths flip `paletteIsCollapsed`, so resize the window to match.
             .onChange(of: core.paletteCoordinator.paletteIsCollapsed) {
+                core.paletteCoordinator.syncPaletteSize()
+            }
+            .onChange(of: presentsBrowserSearch) {
                 core.paletteCoordinator.syncPaletteSize()
             }
     }

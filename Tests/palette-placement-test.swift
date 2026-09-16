@@ -51,6 +51,8 @@ struct PalettePlacementTests {
         restoringPartlyOffscreen()
         snapping()
         menuPanelAnchors()
+        browserPresentationState()
+        browserPanelGeometry()
         tokenGrammar()
         everyInterfaceSize()
 
@@ -218,6 +220,67 @@ struct PalettePlacementTests {
         expect(headerCanvas.maxY, header.maxY, "header expansion keeps its top edge fixed")
     }
 
+    // MARK: - Browser search
+
+    static func browserPresentationState() {
+        expect(
+            PalettePanelPresentation.resolve(collapsed: true, browserSearch: false) == .compact,
+            "the launcher can still use the compact frame")
+        expect(
+            PalettePanelPresentation.resolve(collapsed: false, browserSearch: false) == .standard,
+            "an ordinary screen uses the standard frame")
+        expect(
+            PalettePanelPresentation.resolve(collapsed: false, browserSearch: true) == .browser,
+            "a browser search selects the large frame")
+        expect(
+            PalettePanelPresentation.resolve(collapsed: true, browserSearch: true) == .browser,
+            "a browser search uses the large frame even if the launcher is compact")
+        expect(
+            PalettePanelPresentation.resolve(collapsed: false, browserSearch: false) == .standard,
+            "leaving browser search restores the standard presentation")
+    }
+
+    static func browserPanelGeometry() {
+        let anchor = home(smallest)
+        let standardSize = CGSize(width: width, height: metrics.size.panelHeight)
+        let inset = metrics.spacing.xl
+        let standard = PalettePanelPresentation.standard.frame(
+            anchor: anchor, standardSize: standardSize,
+            compactHeight: metrics.size.compactHeight, visibleFrame: smallest, inset: inset)
+        let browser = PalettePanelPresentation.browser.frame(
+            anchor: anchor, standardSize: standardSize,
+            compactHeight: metrics.size.compactHeight, visibleFrame: smallest, inset: inset)
+
+        expect(browser.width >= standard.width * 1.35, "browser search is materially wider")
+        expect(browser.height >= standard.height * 1.35, "browser search is materially taller")
+        expect(
+            smallest.insetBy(dx: inset, dy: inset).contains(browser),
+            "the large browser frame stays inside the visible screen")
+        expect(browser.midX, standard.midX, "the browser frame expands around the palette centre")
+        let restored = PalettePanelPresentation.standard.frame(
+            anchor: anchor, standardSize: standardSize,
+            compactHeight: metrics.size.compactHeight, visibleFrame: smallest, inset: inset)
+        expect(restored == standard, "the standard frame returns exactly after browser search")
+
+        let movableAnchor = home(external)
+        let movable = PalettePanelPresentation.browser.frame(
+            anchor: movableAnchor, standardSize: standardSize,
+            compactHeight: metrics.size.compactHeight, visibleFrame: external, inset: inset)
+        expect(
+            PalettePanelPresentation.browser.anchor(for: movable, standardWidth: width)
+                == movableAnchor,
+            "dragging a large frame keeps the normal frame's anchor")
+
+        let narrow = CGRect(x: 200, y: 100, width: 820, height: 620)
+        let edgeAnchor = CGPoint(x: narrow.maxX - 100, y: narrow.minY + 200)
+        let clamped = PalettePanelPresentation.browser.frame(
+            anchor: edgeAnchor, standardSize: standardSize,
+            compactHeight: metrics.size.compactHeight, visibleFrame: narrow, inset: inset)
+        expect(
+            narrow.insetBy(dx: inset, dy: inset).contains(clamped),
+            "a small screen clamps the whole browser frame into view")
+    }
+
     // MARK: - The tokens these rules depend on
 
     static func tokenGrammar() {
@@ -250,6 +313,14 @@ struct PalettePlacementTests {
                     anchor.y - metrics.size.panelHeight > screen.minY,
                     "an expanded palette clears the bottom of a \(Int(screen.width))pt display \(label)"
                 )
+                let inset = metrics.spacing.xl
+                let browser = PalettePanelPresentation.browser.frame(
+                    anchor: anchor,
+                    standardSize: CGSize(width: width, height: metrics.size.panelHeight),
+                    compactHeight: metrics.size.compactHeight, visibleFrame: screen, inset: inset)
+                expect(
+                    screen.insetBy(dx: inset, dy: inset).contains(browser),
+                    "the browser frame stays on a \(Int(screen.width))pt display \(label)")
             }
 
             // The wider bar needs more of itself on screen, so a stored edge position can lapse.
