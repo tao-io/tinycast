@@ -14,21 +14,38 @@ struct AIScreen: PaletteScreen {
 
     let rows = [Row()]
 
-    /// One footer pill for Return's two jobs: Send, or Stop while a response streams.
-    var primaryActionTitle: String { chat.isStreaming ? "Stop" : "Send" }
+    /// One footer pill for Return's jobs: Open in Arc if viewing search, Stop while streaming, or Send.
+    var primaryActionTitle: String {
+        if chat.activeWebURL != nil {
+            return "Open in Arc"
+        }
+        return chat.isStreaming ? "Stop" : "Send"
+    }
 
     func actions(at selection: Int) -> PopoverMenuContent? {
         var items: [PopoverMenuItem] = []
+        if chat.activeWebURL != nil {
+            items.append(
+                PopoverMenuItem(title: "Open in Arc", systemImage: "arrow.up.right.square") {
+                    coordinator.openCurrentBrowserSearchInArc()
+                })
+            items.append(
+                PopoverMenuItem(title: "New Search", systemImage: "plus.bubble") {
+                    coordinator.startNewChat()
+                })
+        }
         if chat.isStreaming {
             items.append(
                 PopoverMenuItem(title: "Stop Response", systemImage: "stop.fill") {
                     coordinator.stopResponse()
                 })
         }
-        items.append(
-            PopoverMenuItem(title: "New Chat", systemImage: "plus.bubble") {
-                coordinator.startNewChat()
-            })
+        if chat.activeWebURL == nil {
+            items.append(
+                PopoverMenuItem(title: "New Chat", systemImage: "plus.bubble") {
+                    coordinator.startNewChat()
+                })
+        }
         if chat.lastAssistantText != nil {
             items.append(
                 PopoverMenuItem(title: "Copy Last Response", systemImage: "doc.on.doc", startsSection: true) {
@@ -57,16 +74,32 @@ struct AIScreen: PaletteScreen {
         return PopoverMenuContent(header: chat.session.title, items: items)
     }
 
-    /// Return and the pill are the same action; an empty composer sends nothing.
+    /// Return and the pill are the same action; opens in Arc if web search active, else sends.
     func activate(at selection: Int) {
         if chat.isStreaming {
             coordinator.stopResponse()
-        } else if coordinator.send(vm.query) {
-            vm.query = ""
+        } else if !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if coordinator.send(vm.query) {
+                vm.query = ""
+            }
+        } else if chat.activeWebURL != nil {
+            coordinator.openCurrentBrowserSearchInArc()
         }
     }
 
-    func secondary(at selection: Int) -> Bool { false }
+    /// ⌘↵ opens directly in Arc browser.
+    func secondary(at selection: Int) -> Bool {
+        if !vm.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if coordinator.send(vm.query, openDirectlyInArc: true) {
+                vm.query = ""
+                return true
+            }
+        } else if chat.activeWebURL != nil {
+            coordinator.openCurrentBrowserSearchInArc()
+            return true
+        }
+        return false
+    }
 
     func headerAccessory(
         at selection: Int, focus: FocusState<String?>.Binding
@@ -92,7 +125,13 @@ struct AIScreen: PaletteScreen {
     }
 
     func body(selection: Int, scroll: ScrollIntent) -> AnyView {
-        AnyView(
+        if let webURL = chat.activeWebURL {
+            return AnyView(
+                AIWebView(url: webURL)
+                    .clipShape(RoundedRectangle(cornerRadius: metrics.radius.card, style: .continuous))
+            )
+        }
+        return AnyView(
             AIChatView(
                 chat: chat, settings: settings, availability: coordinator.availability,
                 onConfigure: coordinator.showSettings, onAppear: coordinator.prepareForChat))

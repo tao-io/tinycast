@@ -832,6 +832,13 @@ struct AIProviderTests {
                 == .codex(model: "gpt-5", effort: "high"),
             "the old ChatGPT selection migrates to the installed Codex route")
 
+        let geminiEncoded = try? JSONEncoder().encode(AIModelSelection.geminiBrowser)
+        let geminiDecoded = geminiEncoded.flatMap { try? JSONDecoder().decode(AIModelSelection.self, from: $0) }
+        expect(geminiDecoded == .geminiBrowser, "the geminiBrowser selection survives a round trip")
+        expect(
+            AIModelSelection.geminiBrowser.source == .geminiBrowser,
+            "the geminiBrowser selection is its own source")
+
         let suite = "AIProviderTests.onDevice"
         let defaults = isolatedDefaults(suite)
         defer { discardSuite(suite, defaults) }

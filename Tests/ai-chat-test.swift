@@ -38,9 +38,17 @@ struct AIChatTests {
         await theToolLoopRefusesToRunForever()
         await toolOutputIsBoundedBeforeItIsBilled()
         toolUsesPersistAndSettleOnReload()
+        geminiBrowserLauncherBuildsExpectedURL()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
+    }
+
+    static func geminiBrowserLauncherBuildsExpectedURL() {
+        let sampleURL = GeminiBrowserLauncher.searchURL(for: "SAMPLE")?.absoluteString
+        expect(
+            sampleURL == "https://www.google.com/search?q=SAMPLE&udm=50&sourceid=chrome&ie=UTF-8",
+            "Gemini browser search URL matches Google AI Mode format")
     }
 
     /// A reply that searched and called tools has to render them in the order they happened.

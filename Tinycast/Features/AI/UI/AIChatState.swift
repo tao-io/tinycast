@@ -9,6 +9,7 @@ final class AIChatState {
     private(set) var isThinking = false
     private(set) var usage: AIUsage?
     private(set) var notice: String?
+    private(set) var activeWebURL: URL?
     /// Files staged for the next message; they go out with whatever is typed next.
     private(set) var pendingAttachments: [ChatAttachment] = []
 
@@ -125,8 +126,24 @@ final class AIChatState {
         finishLast(state: .failed, fallback: "Cancelled")
     }
 
+    func showBrowserSearch(query: String, url: URL?) {
+        cancel()
+        activeWebURL = url
+        usage = nil
+        notice = nil
+        clearStaging()
+        session.append(ChatMessage(role: .user, text: query))
+        session.append(ChatMessage(role: .assistant, text: "Google AI Mode: \(query)"))
+        history.save(session)
+    }
+
+    func clearBrowserSearch() {
+        activeWebURL = nil
+    }
+
     func startNewChat() {
         cancel()
+        activeWebURL = nil
         session = ChatSession()
         usage = nil
         notice = nil
@@ -143,12 +160,23 @@ final class AIChatState {
         usage = nil
         notice = nil
         clearStaging()
+        if let userMessage = loaded.messages.first(where: { $0.role == .user })?.text {
+            let isBrowserSearch = loaded.messages.contains { $0.text.hasPrefix("Google AI Mode:") }
+            if isBrowserSearch {
+                activeWebURL = GeminiBrowserLauncher.searchURL(for: userMessage)
+            } else {
+                activeWebURL = nil
+            }
+        } else {
+            activeWebURL = nil
+        }
         return true
     }
 
     func delete(id: UUID) {
         if session.id == id {
             cancel()
+            activeWebURL = nil
             session = ChatSession()
             usage = nil
             notice = nil
@@ -159,6 +187,7 @@ final class AIChatState {
 
     func deleteAll() {
         cancel()
+        activeWebURL = nil
         history.clearAll()
         session = ChatSession()
         usage = nil

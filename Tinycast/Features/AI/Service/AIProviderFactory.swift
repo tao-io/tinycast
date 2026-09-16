@@ -28,6 +28,8 @@ enum AIProviderFactory {
         guardrails: SystemLanguageModel.Guardrails = .default
     ) throws -> any AIProvider {
         switch selection {
+        case .geminiBrowser:
+            return GeminiBrowserProvider()
         case .appleIntelligence:
             if let message = AppleIntelligenceProvider.status().message {
                 throw AIProviderError.unavailable(message)
