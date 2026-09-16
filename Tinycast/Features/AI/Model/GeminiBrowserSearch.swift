@@ -26,4 +26,13 @@ enum GeminiBrowserSearch {
         guard text.hasPrefix(historyPrefix) else { return nil }
         return searchURL(for: String(text.dropFirst(historyPrefix.count)))
     }
+
+    static func isAllowed(_ url: URL) -> Bool {
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+            components.scheme?.lowercased() == "https",
+            ["google.com", "www.google.com"].contains(components.host?.lowercased() ?? ""),
+            components.path == "/search"
+        else { return false }
+        return components.queryItems?.contains { $0.name == "udm" && $0.value == "50" } == true
+    }
 }

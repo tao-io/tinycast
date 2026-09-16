@@ -39,7 +39,9 @@ struct AIChatTests {
         await toolOutputIsBoundedBeforeItIsBilled()
         toolUsesPersistAndSettleOnReload()
         geminiBrowserSearchBuildsExpectedURL()
-        geminiBrowserSearchRestoresTheLastQuery()
+        geminiBrowserSearchesStayIndependent()
+        geminiBrowserSearchPersistsTheCurrentThreadURL()
+        geminiBrowserSearchFallsBackForLegacyHistory()
 
         print("\(passes) passed, \(failures) failed")
         if failures > 0 { exit(1) }
@@ -59,7 +61,7 @@ struct AIChatTests {
             "Gemini browser search ignores a blank query")
     }
 
-    static func geminiBrowserSearchRestoresTheLastQuery() {
+    static func geminiBrowserSearchesStayIndependent() {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("tinycast-ai-gemini-\(UUID().uuidString)", isDirectory: true)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -74,15 +76,75 @@ struct AIChatTests {
             return
         }
         chat.showBrowserSearch(query: "one", url: first)
+        let firstID = chat.session.id
         chat.showBrowserSearch(query: "two", url: second)
-        expect(chat.activeWebURL == second, "a later search replaces the page")
+        let secondID = chat.session.id
+        expect(firstID != secondID, "each top-composer browser search gets a new session")
+        expect(store.conversations.map(\.id) == [secondID, firstID], "each search gets a history row")
 
-        let id = chat.session.id
-        let reopening = AIChatState(history: store)
-        expect(reopening.open(id: id), "a saved Gemini browser search reopens")
+        expect(chat.open(id: firstID), "a saved browser search reopens")
+        chat.showBrowserSearch(query: "two", url: second)
         expect(
-            reopening.activeWebURL == second,
-            "reopening restores the last Google AI Mode query, not the first")
+            chat.session.id != firstID && chat.session.id != secondID,
+            "searching from reopened history still starts a new session")
+        expect(store.conversations.count == 3, "the reopened search does not overwrite either row")
+    }
+
+    static func geminiBrowserSearchPersistsTheCurrentThreadURL() {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tinycast-ai-gemini-thread-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = ChatHistoryStore(directory: directory)
+        let chat = AIChatState(history: store)
+        guard
+            let first = GeminiBrowserSearch.searchURL(for: "one"),
+            let thread = URL(
+                string:
+                    "https://www.google.com/search?q=one&udm=50&sourceid=chrome&ie=UTF-8&mstk=abc&mtid=xyz"
+            ),
+            let outside = URL(string: "https://example.com/search?q=one&udm=50")
+        else {
+            expect(false, "Gemini browser thread URLs build")
+            return
+        }
+        chat.showBrowserSearch(query: "one", url: first)
+        let id = chat.session.id
+        chat.updateBrowserURL(thread)
+        chat.updateBrowserURL(outside)
+
+        expect(chat.activeWebURL == thread, "an outside navigation cannot replace the saved thread")
+        let reopening = AIChatState(history: ChatHistoryStore(directory: directory))
+        expect(reopening.open(id: id), "a saved Gemini browser thread reopens")
+        expect(
+            reopening.activeWebURL == thread,
+            "reopening and Open in Arc use the latest saved thread URL")
+    }
+
+    static func geminiBrowserSearchFallsBackForLegacyHistory() {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tinycast-ai-gemini-legacy-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        var legacy = ChatSession()
+        legacy.append(ChatMessage(role: .user, text: "old question"))
+        legacy.append(
+            ChatMessage(
+                role: .assistant,
+                text: GeminiBrowserSearch.historyText(for: "old question")))
+        legacy.append(ChatMessage(role: .user, text: "later question"))
+        legacy.append(
+            ChatMessage(
+                role: .assistant,
+                text: GeminiBrowserSearch.historyText(for: "later question")))
+        let store = ChatHistoryStore(directory: directory)
+        store.save(legacy)
+
+        let reopening = AIChatState(history: store)
+        expect(reopening.open(id: legacy.id), "a browser record saved before URL tracking reopens")
+        expect(
+            reopening.activeWebURL == GeminiBrowserSearch.searchURL(for: "old question"),
+            "legacy history rebuilds its first-query URL")
     }
 
     /// A reply that searched and called tools has to render them in the order they happened.

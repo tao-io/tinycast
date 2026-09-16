@@ -5,15 +5,17 @@ struct ChatSession: Equatable, Sendable {
     let createdAt: Date
     private(set) var updatedAt: Date
     private(set) var messages: [ChatMessage]
+    private(set) var browserURL: URL?
 
     init(
         id: UUID = UUID(), createdAt: Date = Date(), updatedAt: Date? = nil,
-        messages: [ChatMessage] = []
+        messages: [ChatMessage] = [], browserURL: URL? = nil
     ) {
         self.id = id
         self.createdAt = createdAt
         self.updatedAt = updatedAt ?? createdAt
         self.messages = messages
+        self.browserURL = browserURL
     }
 
     var title: String {
@@ -32,6 +34,13 @@ struct ChatSession: Equatable, Sendable {
         ChatConversation(
             id: id, title: title, preview: preview, createdAt: createdAt,
             updatedAt: updatedAt, messageCount: messages.count)
+    }
+
+    var resumableBrowserURL: URL? {
+        if let browserURL, GeminiBrowserSearch.isAllowed(browserURL) { return browserURL }
+        return messages.lazy.filter { $0.role == .assistant }.compactMap {
+            GeminiBrowserSearch.searchURL(fromHistoryText: $0.text)
+        }.first
     }
 
     /// `textBudget` is the route's, not the chat's: on-device windows hold far less than a cloud.
@@ -85,6 +94,12 @@ struct ChatSession: Equatable, Sendable {
     mutating func replaceLast(with message: ChatMessage, now: Date = Date()) {
         guard !messages.isEmpty else { return }
         messages[messages.count - 1] = message
+        updatedAt = max(updatedAt, now)
+    }
+
+    mutating func updateBrowserURL(_ url: URL, now: Date = Date()) {
+        guard GeminiBrowserSearch.isAllowed(url) else { return }
+        browserURL = url
         updatedAt = max(updatedAt, now)
     }
 

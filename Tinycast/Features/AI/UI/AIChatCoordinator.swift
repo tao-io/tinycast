@@ -119,12 +119,11 @@ final class AIChatCoordinator {
 
         if core.aiSettings.defaultModel == .geminiBrowser {
             guard let url = GeminiBrowserSearch.searchURL(for: text) else { return false }
+            chat.showBrowserSearch(query: text, url: url)
             if openDirectlyInArc {
-                GeminiBrowserLauncher.openInArc(url: url)
-                paletteCoordinator.hidePalette()
+                openCurrentBrowserSearchInArc()
                 return true
             }
-            chat.showBrowserSearch(query: text, url: url)
             return true
         }
 
@@ -150,6 +149,10 @@ final class AIChatCoordinator {
             GeminiBrowserLauncher.openInArc(url: url)
             paletteCoordinator.hidePalette()
         }
+    }
+
+    func browserDidNavigate(to url: URL) {
+        chat.updateBrowserURL(url)
     }
 
     /// Only chat wraps a route in the tool loop; a text rewrite has nothing to call.

@@ -128,6 +128,8 @@ final class AIChatState {
 
     func showBrowserSearch(query: String, url: URL) {
         cancel()
+        session = ChatSession()
+        session.updateBrowserURL(url)
         activeWebURL = url
         usage = nil
         notice = nil
@@ -138,8 +140,21 @@ final class AIChatState {
         history.save(session)
     }
 
+    func updateBrowserURL(_ url: URL) {
+        guard activeWebURL != nil, GeminiBrowserSearch.isAllowed(url), url != activeWebURL else {
+            return
+        }
+        activeWebURL = url
+        session.updateBrowserURL(url)
+        history.save(session)
+    }
+
     func clearBrowserSearch() {
+        guard activeWebURL != nil else { return }
         activeWebURL = nil
+        session = ChatSession()
+        usage = nil
+        notice = nil
     }
 
     func startNewChat() {
@@ -161,9 +176,7 @@ final class AIChatState {
         usage = nil
         notice = nil
         clearStaging()
-        activeWebURL = loaded.messages.last(where: { $0.role == .assistant }).flatMap {
-            GeminiBrowserSearch.searchURL(fromHistoryText: $0.text)
-        }
+        activeWebURL = loaded.resumableBrowserURL
         return true
     }
 
